@@ -3,8 +3,10 @@ package actions
 import (
 	"log"
 	"strings"
+	"time"
 
 	"github.com/Wason1797/gptmonkey/configs"
+	"github.com/Wason1797/gptmonkey/text"
 	"github.com/Wason1797/gptmonkey/utils"
 	"github.com/urfave/cli/v2"
 )
@@ -53,10 +55,22 @@ func MainAction(cCtx *cli.Context) error {
 		log.Fatal("Please provide a promt for the model")
 	}
 
-	// 5. Query Model
+	// 5. Add animations while waiting :^)
+	animation := text.NewAnimation([]string{"🌎", "🌍", "🌏"})
+	animation.Init()
+	response_ch := make(chan []ModelResponse)
 
-	response_slice := GetModelResponse(config_map[configs.CODELLAMA_URL], prompt)
-	PrintModelResponse(response_slice)
+	// 6. Query Model
+	go GetModelResponse(config_map[configs.CODELLAMA_URL], prompt, response_ch)
 
-	return nil
+	for {
+		select {
+		case rsp := <-response_ch:
+			PrintModelResponse(rsp)
+			return nil
+		case <-time.After(time.Second / 2):
+			animation.Animate()
+		}
+	}
+
 }

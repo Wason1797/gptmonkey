@@ -14,6 +14,7 @@ const COMMENT = "#"
 const EQ = "="
 const API_KEY = "API_KEY"
 const CODELLAMA_URL = "CODELLAMA_URL"
+const ONLY_CODE = "ONLY_CODE"
 
 type ConfigMap map[string]string
 type TokenAction func(ConfigMap, string)
@@ -45,6 +46,9 @@ var token_list = []ConfigToken{
 	}),
 	makeToken(CODELLAMA_URL, func(m ConfigMap, line string) {
 		m[CODELLAMA_URL] = parseConfigLine(CODELLAMA_URL, line)
+	}),
+	makeToken(ONLY_CODE, func(m ConfigMap, line string) {
+		m[ONLY_CODE] = parseConfigLine(ONLY_CODE, line)
 	}),
 }
 

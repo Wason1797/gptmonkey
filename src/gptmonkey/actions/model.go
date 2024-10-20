@@ -17,7 +17,7 @@ type ModelResponse struct {
 	Done      bool   `json:"done"`
 }
 
-func GetModelResponse(url string, prompt string) []ModelResponse {
+func GetModelResponse(url string, prompt string, c chan []ModelResponse) {
 
 	body_map := map[string]string{
 		"model":  "codellama",
@@ -27,7 +27,8 @@ func GetModelResponse(url string, prompt string) []ModelResponse {
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(request_body))
 
 	if err != nil {
-		log.Fatal(err)
+		c <- make([]ModelResponse, 0)
+		log.Print(err)
 	}
 
 	response_body, _ := io.ReadAll(resp.Body)
@@ -48,10 +49,11 @@ func GetModelResponse(url string, prompt string) []ModelResponse {
 		response_slice = append(response_slice, parsed_line)
 	}
 
-	return response_slice
+	c <- response_slice
 }
 
 func PrintModelResponse(response_slice []ModelResponse) {
+	fmt.Print("\033[u\033[K")
 	for _, response := range response_slice {
 		if !response.Done {
 			fmt.Print(response.Response)
