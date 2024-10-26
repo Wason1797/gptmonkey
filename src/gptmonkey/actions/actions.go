@@ -1,37 +1,24 @@
 package actions
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/Wason1797/gptmonkey/animation"
 	"github.com/Wason1797/gptmonkey/configs"
+	"github.com/Wason1797/gptmonkey/ollama"
 	"github.com/Wason1797/gptmonkey/text"
-	"github.com/Wason1797/gptmonkey/utils"
 	"github.com/urfave/cli/v2"
 )
-
-func initBaseConfigs(config_map configs.ConfigMap) bool {
-	if _, ok := config_map[configs.CODELLAMA_URL]; !ok {
-
-		olama_url := utils.ReadInput("Input your olama url")
-		if len(olama_url) > 0 {
-			config_map[configs.CODELLAMA_URL] = olama_url
-			return true
-		} else {
-			log.Fatal("Invalid url entered")
-		}
-
-	}
-	return false
-}
 
 func MainAction(cCtx *cli.Context) error {
 	// 1. Check for configs
 	config_map := configs.GetConfigs()
 
 	// 2. Ask for a url to query
-	configs_changed := initBaseConfigs(config_map)
+	configs_changed := configs.InitBaseConfigs(config_map)
 
 	// 3. Store said url in a config file if something was changed
 	if configs_changed {
@@ -56,20 +43,23 @@ func MainAction(cCtx *cli.Context) error {
 	}
 
 	// 5. Add animations while waiting :^)
-	animation := text.NewAnimation([]string{"🌎", "🌍", "🌏"})
-	animation.Init()
-	response_ch := make(chan []ModelResponse)
+	monkey := animation.NewAnimation([]string{"🙈", "🙉", "🙊", "🐵", "🐒"})
+	monkey.Init()
+	response_ch := make(chan []ollama.ModelResponse)
 
 	// 6. Query Model
-	go GetModelResponse(config_map[configs.CODELLAMA_URL], prompt, response_ch)
+	go ollama.GetModelResponse(config_map[configs.CODELLAMA_URL], prompt, response_ch)
 
 	for {
 		select {
 		case rsp := <-response_ch:
-			PrintModelResponse(rsp)
+			monkey.End()
+			formatter := text.GetResponseFormatter(config_map.OutputMode())
+			result := formatter(text.ModelResponseToText(rsp))
+			fmt.Print(result)
 			return nil
 		case <-time.After(time.Second / 2):
-			animation.Animate()
+			monkey.Animate()
 		}
 	}
 
