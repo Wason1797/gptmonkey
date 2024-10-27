@@ -47,6 +47,10 @@ func MainAction(cCtx *cli.Context) error {
 	monkey.Init()
 	response_ch := make(chan []ollama.ModelResponse)
 
+	if config_map.OutputMode() == text.ONLY_CODE {
+		prompt += ". only code or commands, no explanation"
+	}
+
 	// 6. Query Model
 	go ollama.GetModelResponse(config_map[configs.CODELLAMA_URL], prompt, response_ch)
 
